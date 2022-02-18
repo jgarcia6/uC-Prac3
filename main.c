@@ -24,8 +24,10 @@ void delayMs(uint16_t ms)
 
 static void update_led(void)
 {
-    /* Set the GPIO level according to the button state (LOW or HIGH)*/
-    gpio_set_level(LED_GPIO, gpio_get_level(BTN_GPIO));
+    /* Set the GPIO level according to the button state (LOW or HIGH)
+       Inverting button as the button will read '0' when pressed,
+       and we want the LED to turn on when the button is pressed. */
+    gpio_set_level(LED_GPIO, !gpio_get_level(BTN_GPIO)); 
 }
 
 static void configure_led(void)
@@ -64,6 +66,6 @@ void app_main(void)
     while(1)
     {
         update_led();
-        delayMs(1000);
+        delayMs(10);
     }
 }
