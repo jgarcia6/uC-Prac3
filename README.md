@@ -1,2 +1,2 @@
 # uC-Prac3
-Printf("hello world")
+SDK GPIO. "Simon says"
