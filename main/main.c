@@ -83,7 +83,7 @@ eButtonState_t checkButtons(eButtonId_t *buttonNumber)
     return eBtnUndefined;
 }
 
-ePlayerInputState_t checkPlayerInput(void)
+ePlayerInputState_t checkPlayerInput(eButtonState_t buttonState, eButtonId_t buttonId)
 {
     // FIXME:
     // Waits for player input and verifies that it is matching the pattern
@@ -100,12 +100,15 @@ int app_main(void)
     eGameState_t  currentGameState = eGameRestart;
     ePlayerInputState_t playerInputState;
     eButtonId_t buttonId;
+    eButtonState_t buttonState;
 
     initIO();
 
     while(1)
     {   
-        if (checkButtons(&buttonId) == eBtnLongPressed)
+        buttonState = checkButtons(&buttonId);
+        
+        if (buttonState == eBtnLongPressed)
             currentGameState = eGameRestart;
 
         switch(currentGameState)
@@ -121,7 +124,7 @@ int app_main(void)
 
             case eWaitForStart:
                 playSequence(eWaitForStart);
-                if (checkButtons(&buttonId) == eBtnShortPressed)
+                if (buttonState == eBtnShortPressed)
                     currentGameState++;
                 break;
 
@@ -131,7 +134,7 @@ int app_main(void)
                 break;
 
             case eWaitForPlayer:
-                playerInputState = checkPlayerInput();
+                playerInputState = checkPlayerInput(buttonState, buttonId);
                 if (playerInputState == eCorrect)
                 {
                     level++;
