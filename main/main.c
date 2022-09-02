@@ -134,6 +134,7 @@ int app_main(void)
                 break;
 
             case eWaitForPlayer:
+                playSequence(eWaitForPlayer);
                 playerInputState = checkPlayerInput(buttonState, buttonId);
                 if (playerInputState == eCorrect)
                 {
