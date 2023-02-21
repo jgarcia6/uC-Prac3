@@ -10,6 +10,36 @@
 #define LED_GPIO    GPIO_NUM_2
 #define BTN_GPIO    GPIO_NUM_4
 
+#define NUM_LEDS sizeof(ledArray)
+uint8_t ledArray[] = 
+{
+  GPIO_NUM_32,  // Leftmost LED
+  GPIO_NUM_33,
+  GPIO_NUM_25,
+  GPIO_NUM_26,
+  GPIO_NUM_27,
+  GPIO_NUM_14,
+  GPIO_NUM_12   //Rightmost LED
+};
+
+uint8_t btnArray[] = 
+{
+  GPIO_NUM_19,  // Left Btn
+  GPIO_NUM_18   // Right Btn
+};
+
+enum
+{
+  eGoingLeft = -1,
+  eGoingRight = 1
+};
+
+#define LEFT_BTN        GPIO_NUM_19
+#define RIGHT_BTN       GPIO_NUM_18
+#define LED_ON_DELAY    300
+#define LED_OFF_DELAY   50
+#define SPEED_UP        20
+
 // Enumerations
 typedef enum ButtonState_tag
 {
@@ -27,10 +57,8 @@ typedef enum PlayerInputState_tag
 
 typedef enum ButtonId_tag
 {
-    eButtonId0 = 0,
-    eButtonId1,
-    eButtonId2,
-    eButtonId3,
+    eLeftButton = 0, // This enum must follow btnArray
+    eRightButton,
     eMaxButtonId
 } eButtonId_t;
 
@@ -38,19 +66,13 @@ typedef enum GameState_tag
 {
     eGameRestart = 0,
     eWaitForStart,
-    ePlayPattern,
-    eWaitForPlayer,
-    eYouWin,
-    eYouLose
+    eOngoingGame,
+    eEnd
 } eGameState_t;
-
-#define MAX_LEVEL  8
-#define NUM_OF_LEDS 4
 
 // Global variable
 uint32_t _millis;
-uint8_t randomPattern[MAX_LEVEL];
-uint8_t level;
+uint8_t score;
 
 static void initIO(void)
 {
@@ -66,13 +88,11 @@ static void initIO(void)
     gpio_pullup_en(BTN_GPIO);
 }
 
-bool playSequence(eGameState_t gameState)
+void playSequence(eGameState_t gameState)
 {
     // FIXME:
     // Playback the corresponding animation of the gameState parameter
-    // Once playback has finished, return true, otherwise return false
     gpio_set_level(LED_GPIO, !gpio_get_level(BTN_GPIO)); 
-    return true;
 }
 
 eButtonState_t checkButtons(eButtonId_t *buttonNumber)
@@ -114,11 +134,7 @@ int app_main(void)
         switch(currentGameState)
         {
             case eGameRestart:
-                for (uint8_t idx = 0; idx < MAX_LEVEL; idx++ )
-                {
-                    randomPattern[idx] = esp_random() & (NUM_OF_LEDS - 1);
-                }
-                level = 0;
+                //Init game variables
                 currentGameState++;
                 break;
 
@@ -128,35 +144,20 @@ int app_main(void)
                     currentGameState++;
                 break;
 
-            case ePlayPattern:
-                if (!playSequence(ePlayPattern))
-                    currentGameState++;
-                break;
-
-            case eWaitForPlayer:
-                playSequence(eWaitForPlayer);
+            case eOngoingGame:
+                playSequence(eOngoingGame);
                 playerInputState = checkPlayerInput(buttonState, buttonId);
                 if (playerInputState == eCorrect)
                 {
-                    level++;
-                    if (level < MAX_LEVEL)
-                    {
-                        currentGameState = ePlayPattern;
-                    }
-                    else
-                    {
-                        currentGameState = eYouWin;
-                    }
+                    score++;
                 }
                 else if (playerInputState == eIncorrect)
                 {
-                    currentGameState = eYouLose;
+                    currentGameState = eEnd;
                 }
                 break;
-            case eYouLose:
-            case eYouWin:
-                if (!playSequence(currentGameState))
-                    currentGameState = eGameRestart;
+            case eEnd:
+                playSequence(eEnd);
                 break;
         }
         delayMs(1);
